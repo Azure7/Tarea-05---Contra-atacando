@@ -1,12 +1,12 @@
 /**
  * Base
  *
- * Modela la definiciÃ³n de todos los objetos de tipo
- * <code>Base</code>
+ * 
  *
- * @author David Orlando de la Fuente Garza, A00817582
- * @version 01 
- * @date 13/01/2016
+ * @author David Orlando de la Fuente Garza, A0817582
+ * @author Barbara Berenice Váldez Mireles, A01175920
+ * @version 01
+ * @date 24/02/2016
  */
 import java.awt.Graphics;
 import java.awt.Image;
