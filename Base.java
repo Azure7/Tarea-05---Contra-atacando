@@ -20,6 +20,7 @@ public class Base {
     private int iY;     //posicion en y.
     private int iAncho; //ancho del objeto
     private int iAlto; //largo del objeto
+    private int iTrayectoria; 
     private Image imaImagen;	//imagen.
     private ImageIcon imiImagen;  // imagen con medidas
 
@@ -43,6 +44,7 @@ public class Base {
         this.imiImagen = new ImageIcon(imaImagen);
         this.iAncho = this.imiImagen.getIconWidth();
         this.iAlto = this.imiImagen.getIconHeight();
+        this.iTrayectoria = 0;
     }
 
     
@@ -144,6 +146,30 @@ public class Base {
      */
     public int getAlto() {
         return iAlto;
+    }
+    
+    /**
+     * getTrayectoria
+     * 
+     * Método que regresa la trayectoria de un disparo 
+     * 
+     * @return un <code>entero</code> que es la trayectoria del disparo
+     * 
+     */
+    public int getTrayectoria() {
+        return iTrayectoria;
+    }
+    
+    /**
+     * setTrayectoria
+     * 
+     * Método modificador usado para cambiar la trayectoria de un disparo
+     * 
+     * @param iTrayectoria es la <code>trayectoria </code> del objeto.
+     * 
+     */
+    public void setTrayectoria(int iTrayectoria) {
+            this.iTrayectoria = iTrayectoria;
     }
     
     /**
