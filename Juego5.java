@@ -42,8 +42,9 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
      
     /* Objetos Base */
     private Base     basPrincipal;      // Objeto Principal
+    private Base     basDisparo;        // Objeto Disparo
+    private LinkedList<Base> lklDisparo;// Lista de objeto de Disparo
     private LinkedList<Base> lklMalos;  // Lista de objetos de Malos
-    private LinkedList<Base> lklBuenos; // Lista de objetos de Buenos
     
     /* Objetos gráficos */
     private Graphics graGraficaApplet;  // Objeto gráfico de la Imagen
@@ -51,21 +52,28 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
     private Image    imaImagenFondo;    // Para dibujar la imagen de Fondo
     private Image    imaImagenGameOver; // Para dibujar la imagen de Game Over
     private Image    imaImagenPrincipal;// Imagen Principal
+    private Image    imaImagenDisparo;  // Imagen Disparo
     private Image    imaImagenMalo;     // Imagen Malo
-    private Image    imaImagenBueno;    // Imagen Bueno   
-    private Color    colRojo;             // Color del Puntaje y Vidas
+    private Color    colRojo;           // Color del Puntaje y Vidas
     
     /* Objetos de audio */
-    private SoundClip audPuntos;        // Colisión de Principal con Bueno
+    private SoundClip audPuntos;        // Sonido cuando se destruye un Malo
     private SoundClip audPierdeVida;    // Principal pierde una vida
     
-    /* Variables enteras del Juego */  
+    /* Variables enteras del Juego */ 
     private int      iScore;            // Puntaje del juego
     private int      iVidas;            // Vidas de Principal
+    private int      iVelMal;           // Velocidad de los Malos
     private int      iContMalos;        // Contador de colisiones con Malos
     
+    /* Variables booleanas */
+    private boolean  bDisparo;          // Registra si se puede o no disparar
+    private boolean  bPause;            // Booleano de Pausa del Juego
+    private boolean  bGameOver;         // Booleano del Game Over
+    
     /* Variables de movimiento de Principal */
-    private char     cTecla;            // Dirección de movimiento de Principal
+    private char     cTeclaMov;         // Dirección de movimiento de Principal
+    private char     cTecla;            // Dirección de movimiento de Disparo
     
     /* Variables string para guardar archivos */
     private String sNombreArchivo;
@@ -85,11 +93,13 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
     
     public void init() {   
         // Llamo a las funciones para inicializar la interfaz del Juego, 
-        // así como crear y reposicionar a Principal, Malos y Buenos
+        // así como crear y reposicionar a Principal y Malos
         incializaEscenario();
         creaPrincipal();
         creaMalos();
-        creaBuenos();
+        
+        // Creo la lista de los Disparos
+        lklDisparo = new LinkedList<Base>();
     }
     
     /**
@@ -116,6 +126,16 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         
         // Incializo la tecla de movimiento en espacio en blanco
         cTecla = ' ';
+        cTeclaMov = ' ';
+        
+        // Al inicio del juego se puede disparar
+        bDisparo = true;
+        
+        // Inicialzo la Pausa en false
+        bPause = false;
+        
+        // Inicializo el estatus de Game Over
+        bGameOver = false;
                            
         // Defino el Sonido para cuando se pierde una vida
         audPierdeVida = new SoundClip ("Explosion.wav"); 
@@ -152,9 +172,42 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
 	basPrincipal = new Base(0, 0, 
                 Toolkit.getDefaultToolkit().getImage(urlImagenPrincipal));
         
-        // Reposiciona a Principal exactamente en el centro del Applet
+        // Reposiciona a Principal en medio en la parte inferior de la pantalla
         basPrincipal.setX(getWidth() / 2 - basPrincipal.getAncho() / 2);
-        basPrincipal.setY(getHeight() / 2 - basPrincipal.getAlto() / 2);
+        basPrincipal.setY(getHeight() - basPrincipal.getAlto());
+    }
+    
+    /** creaDisparo()
+    *
+    * Crea la Imagen y Objeto para el Disparo
+    *
+    * 
+    **/
+    public void creaDisparo(char cTrayectoria) {
+        // Defino la Imagen de Disparo
+	URL urlImagenDisparo = this.getClass().getResource("coin.gif");
+        imaImagenDisparo = Toolkit.getDefaultToolkit().getImage
+                (urlImagenDisparo);
+        
+        // Creo el objeto para Disparo
+	basDisparo = new Base(0, 0, 
+                Toolkit.getDefaultToolkit().getImage(urlImagenDisparo));
+        
+        // Posiciono a Disparo justo encima de Principal
+        basDisparo.setX(basPrincipal.getX() + basPrincipal.getAncho() / 4);
+        basDisparo.setY(basPrincipal.getY());
+        
+        // Le asigno su trayectoria
+        if(cTecla == 'A') {
+            basDisparo.setTrayectoria(1);
+        }
+        
+        if(cTecla == 'S') {
+            basDisparo.setTrayectoria(2);
+        }
+        
+        // Añado el disparo a la lista
+        lklDisparo.add(basDisparo);
     }
     
     /** creaMalos()
@@ -184,6 +237,9 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
             lklMalos.add(basMalo);
         } 
         
+        // Inicializo la velocidad de los Malos
+        iVelMal = 2;
+        
         // Reposiciono a todos los Malos en la parte derecha del Applet
         for(Base basMalo : lklMalos) {           
             reposicionaMalo(basMalo); 
@@ -197,72 +253,24 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
      * 
      */    
     public void reposicionaMalo(Base basMalo){
-        // Reposiciono a cada Malo de la Lista de manera random para que 
-            // entre por la parte derecha del Applet
-        basMalo.setX(getWidth() + (int) (Math.random() 
+        // Reposiciono a cada Moneda de la Lista de manera random encima del 
+            // marco para que caigan a diferente momento
+        basMalo.setX((int) (Math.random() 
             * (getWidth() - basMalo.getAncho())));
-        basMalo.setY(30 + (int) (Math.random() 
-            * (getHeight() - basMalo.getAlto())));      
-    }
-    
-    /** creaBuenos()
-    *
-    * Crea la Imagen y la lista de Objetos para Buenos
-    *
-    * 
-    **/
-    public void creaBuenos() {
-        // Defino la Imagen de Bueno
-	URL urlImagenBueno = this.getClass().getResource("coin.gif");
-        imaImagenBueno = Toolkit.getDefaultToolkit().getImage(urlImagenBueno);
-        
-        // Creo la lista de los Buenos
-        lklBuenos = new LinkedList<Base>();
-                
-        // Declaro el número al azar entre 10 y 15 para crear a los Buenos
-        int iRanBuenos =  ((int) (Math.random() * 6 + 10));
-        
-        // Creo a los Buenos
-        for(int iI = 0; iI < iRanBuenos; iI++){
-            // Creo a un Bueno           
-            Base basBueno = new Base(0, 0,
-                Toolkit.getDefaultToolkit().getImage(urlImagenBueno));
-            
-            // Añado a Bueno a la Lista
-            lklBuenos.add(basBueno);
-        }
-        
-        // Reposiciono a todos los Buenos en la parte izquierda del Applet
-        for(Base basBueno : lklBuenos) {           
-            reposicionaBueno(basBueno); 
-        }
-    }
-    
-    /** 
-     * reposicionaBueno
-     * Reposiciona a Bueno de manera random en la parte izquierda de la Pantalla
-     * @param basBueno
-     * 
-     */    
-    public void reposicionaBueno(Base basBueno){
-        // Reposiciono a cada Bueno de la Lista de manera random para que 
-            // entre por la parte izquierda del Applet
-        basBueno.setX(0 - (int) (Math.random() 
-            * (getWidth() - basBueno.getAncho())));
-        basBueno.setY(30 + (int) (Math.random() 
-            * (getHeight() - basBueno.getAlto())));      
+        basMalo.setY(0 - (int) (Math.random() 
+            * (getHeight() - basMalo.getAlto())));       
     }
     
     /**
      * checaColision
      * 
-     * Método que manda a llamar a los métodos de colisión de Principal, 
-     * Malos y Buenos
+     * Método que manda a llamar a los métodos de colisión de Principal
+     * y de los Malos
      * 
      */
     public void checaColision(){
         checaBordes();
-        checaColisionBuenos();
+        checaColisionDisparo();
         checaColisionMalos();
     }
     
@@ -291,6 +299,25 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
     }
     
     /**
+     * checaColisionDisparo
+     * 
+     */
+    public void checaColisionDisparo() {
+        // Para cada disparo en pantalla
+        for(int i = 0; i < lklDisparo.size(); i++) {
+            // Borra el disparo si colisiona con el tope de la pantalla
+            if(lklDisparo.get(i).getY() <= 0) {
+                lklDisparo.remove(i);
+            }
+            // Borra el disparo si colisiona con los lados de la pantalla
+            else if(lklDisparo.get(i).getX() <= 0 
+                    || lklDisparo.get(i).getX() >= getWidth()) {
+                lklDisparo.remove(i);
+            }
+        }
+    }
+    
+    /**
      * checaColisionMalos
      * 
      * Método para revisar la colisión de los Malos
@@ -303,41 +330,31 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
             if(basMalo.colisiona(basPrincipal)) {
                 iContMalos++;
                 reposicionaMalo(basMalo);
-            }               
+                // El puntaje sólo puede disminuir si es mayor a 0
+                if(iScore >= 0) {
+                    iScore--;
+                }
+            }    
+            
+            // Si Malo toca la parte inferior de la pantalla, lo reposiciona
+            if(basMalo.getY() >= getHeight() - basMalo.getAlto()) {
+                reposicionaMalo(basMalo);
+            }
         }
         
-        // Si un Malo llega al extremo izquierdo del Applet, lo reposiciona
-        for(Base basMalo : lklMalos) {
-            if(basMalo.getX() <= 0) {
-                reposicionaMalo(basMalo);
-            }               
-        }     
-    }
-    
-    /**
-     * checaColisionBuenos
-     * 
-     * Método para revisar la colisión de los Buenos
-     * 
-     */
-    public void checaColisionBuenos() { 
-        // Si un Bueno colisiona con Principal, reproduce un sonido,
-        // aumenta el puntaje y reposiciona a Bueno para que vuelve a entrar
-        // por la parte izquierda de la pantalla
-        for(Base basBueno : lklBuenos){
-            if(basBueno.colisiona(basPrincipal)) {
-                audPuntos.play();
-                iScore += 10;
-                reposicionaBueno(basBueno);
-            }               
-        }            
-             
-        // Si un Bueno llega al extremo derecho del Applet, lo reposiciona
-        for(Base basBueno : lklBuenos) {
-            if(basBueno.getX() >= getWidth()) {
-                reposicionaBueno(basBueno);
-            }               
-        }    
+        // Para cada Malo
+        for(Base basDisparo : lklDisparo) {
+            for(Base basMalo : lklMalos) {
+                // Revisa si colisiona con un Disparo
+                if(basDisparo.colisiona(basMalo)) {
+                    // Si colisiona, reposiciona a Malo, elimina el Disparo
+                    // y suma 10 puntos
+                    lklDisparo.remove(basDisparo);
+                    reposicionaMalo(basMalo);
+                    iScore += 10;
+                }
+            }
+        }
     }
 	
     /** 
@@ -350,9 +367,19 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
     public void actualiza(){ 
         actualizaArchivo();
         // Actualizo la posición de Principal según la tecla presionada
-        actualizaPrincipal(cTecla);
-        actualizaBuenos();
+        actualizaPrincipal(cTeclaMov);
         actualizaMalos();
+        
+        // Si se presionó espacio, se crea un disparo y evitar
+        // que se vuelva disparar hasta que no se suelte la tecla
+        // Sólo puede un máximo de 5 balas en pantalla
+        if(cTecla == 'K' || cTecla == 'A' || cTecla == 'S') {
+            if(bDisparo && lklDisparo.size() <= 5) {
+               creaDisparo(cTecla);
+               bDisparo = false; 
+            }
+        }
+        actualizaDisparo();
     }
     
     /**
@@ -380,7 +407,8 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         }
     }
     
-    /** actualizaPrincipal
+    /** 
+    * actualizaPrincipal
     *
     * Actualiza las coordenadas de Principal según la tecla presionada
     *
@@ -388,94 +416,84 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
     **/
     public void actualizaPrincipal(char cChar) {
         switch(cChar){
-            // Si se presiona Q, se mueve hacia la esquina superior izquierda
-            case 'Q':
-                basPrincipal.setX(basPrincipal.getX() - 3);
-                basPrincipal.setY(basPrincipal.getY() - 3);
+            // Si se presiona la tecla izquierda, se mueve a la izquierda
+            case '3':
+                basPrincipal.setX(basPrincipal.getX() - 2);
                 break;
             
-            // Si se presiona P, se mueve hacia la esquina superior derecha
-            case 'P':
-                basPrincipal.setX(basPrincipal.getX() + 3);
-                basPrincipal.setY(basPrincipal.getY() - 3);
-                break;
-            
-            // Si se presiona A, se mueve hacia la esquina inferior izquierda
-            case 'A':
-                basPrincipal.setX(basPrincipal.getX() - 3);
-                basPrincipal.setY(basPrincipal.getY() + 3);
-                break;
-            
-            // Si se presiona L, se mueve hacia la esquina inferior derecha
-            case 'L':
-                basPrincipal.setX(basPrincipal.getX() + 3);
-                basPrincipal.setY(basPrincipal.getY() + 3);
+            // Si se presiona la tecla derecha, se mueve a la derecha
+            case '4':
+                basPrincipal.setX(basPrincipal.getX() + 2);
                 break;
         }
         
-        // Cuando Principal haya colisionado 5 veces con un Malo, disminuye
-        // reproduce un sonido, disminuye una vida y reinicia el contador de 
-        // colisiones
+        // Cuando Principal haya colisionado 5 veces con un Malo
         if(iContMalos >= 5){
+            // Reproduce el sonido indiciando que se perdió una vida
             audPierdeVida.play();
             iVidas--;
+            // Se reinicia el contador de Malos y se incrementa su velocidad
             iContMalos = 0;
+            iVelMal++;
+        }
+    }
+    
+    /** 
+     * actualizaDisparo
+     * 
+     * Método que actualiza la posición del Disparo
+     */
+    public void actualizaDisparo() {
+        for(Base basDisparo : lklDisparo) { 
+            basDisparo.setY(basDisparo.getY() - 2);
+            
+            if(basDisparo.getTrayectoria() == 1) {
+                basDisparo.setX(basDisparo.getX() - 2);
+            }
+            
+            if(basDisparo.getTrayectoria() == 2) {
+                basDisparo.setX(basDisparo.getX() + 2);
+            }
         }
     }
     
     /**
      * actualizaMalos
+     * 
      * Método que actualiza la posición de los Malos
      */
     public void actualizaMalos() {
-        // Actualizo la posición de cada Malo en X para que avance hacia
-        // la parte izquierda de la pantalla al azar de 3 a 5 pixeles
+        // Actualizo la posición de cada Malo en Y para que avance 2 pixeles
+        // hacia la parte inferior de la pantalla
         for(Base basMalo : lklMalos){
-            int iAvanceMalo = ((int) (Math.random() * 3 + 3));
-            basMalo.setX(basMalo.getX() - iAvanceMalo);
-        }
-    }
-    
-    /**
-     * actualizaBuenos
-     * Método que actualiza la posición de los Buenos
-     */
-    public void actualizaBuenos() {
-        // Actualizo la posición de cada Bueno en X para que avance hacia
-        // la parte derecha de la pantalla al azar de 1 a 3 pixeles
-        for(Base basBueno : lklBuenos) {
-            int iAvanceBueno = ((int) (Math.random() * 3 + 1));
-            basBueno.setX(basBueno.getX() + iAvanceBueno);
+            basMalo.setY(basMalo.getY() + iVelMal);
         }
     }
     
     /** grabaArchivo
      * 
      * Método que mandar a llamar a los métodos para grabar la información
-     * del juego, a Principal, Malos y Buenos
+     * del juego, Principal y Malos
      * 
      * @throws IOException 
      */
     public void grabaArchivo() throws IOException {
         grabaVidasScore();
         grabaPrincipal();
-        grabaMalos();
-        grabaBuenos();
-        
+        grabaMalos();      
     }
     
     /**
      * leeArchivo
      * 
      * Método que mandar a llamar a los métodos para leer la información
-     * del juego, a Principal, Malos y Buenos
+     * del juego, a Principal y los Malos
      * @throws IOException 
      */
     public void leeArchivo() throws IOException {
         leeVidasScore();
         leePrincipal();
         leeMalos();
-        leeBuenos();
     }
     
     /**
@@ -532,29 +550,6 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         for(int i = 0; i < lklMalos.size(); i++) {
             fileOut.println(lklMalos.get(i).getX());
             fileOut.println(lklMalos.get(i).getY());
-        }
-        // Cierro el archivo de texto
-        fileOut.close();
-    }
-    
-    /**
-     * grabaBuenos
-     * 
-     * Método que graba en un archivo de texto la cantidad de Buenos y sus 
-     * posiciones dentro del JFrame
-     * @throws IOException 
-     */
-    public void grabaBuenos() throws IOException {   
-        // Creo el archivo de texto para guardar la información de los Malos
-        sNombreArchivo = "Buenos.txt";
-        PrintWriter fileOut = new PrintWriter(new FileWriter(sNombreArchivo));
-        
-        // Guardo la cantidad de Buenos
-        fileOut.println(lklBuenos.size());
-        // Para cada Bueno, guardo su X y su Y
-        for(int i = 0; i < lklBuenos.size(); i++) {
-            fileOut.println(lklBuenos.get(i).getX());
-            fileOut.println(lklBuenos.get(i).getY());
         }
         // Cierro el archivo de texto
         fileOut.close();
@@ -632,11 +627,13 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         fileIn.close();
     }
     
-    /** leeMalos
-    *
-    * Método que lee la cantidad de Buenos
-    * 
-    **/
+    /**
+     * leeMalos
+     * 
+     * Método que lee la información del archivo de texto de Malos y los crea
+     * y ajusta sus posiciones en X y Y
+     * @throws IOException 
+     */
     public void leeMalos() throws IOException {
         // Para acceder a la información de Malos
         sNombreArchivo = "Malos.txt";
@@ -653,7 +650,7 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         String sDato;
         int iPos;
         
-        // Leo la cantidad de Buenos y la paso a una variable entera
+        // Leo la cantidad de Maloss y la paso a una variable entera
         sDato = fileIn.readLine();
         int iMalos = (Integer.parseInt(sDato));
         
@@ -678,75 +675,13 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         sDato = fileIn.readLine();
         // Mientras no se llegue al final del archivo
         while(sDato != null) {  
-            // Para cada Bueno, leo sus posiciones en X y Y
+            // Para cada Malo, leo sus posiciones en X y Y
             for(int i = 0; i < iMalos; i++) {
                 iPos = (Integer.parseInt(sDato));
                 lklMalos.get(i).setX(iPos);
                 sDato = fileIn.readLine();
                 iPos = (Integer.parseInt(sDato));
                 lklMalos.get(i).setY(iPos);
-                sDato = fileIn.readLine();
-            }
-        }
-        // Cierro el archivo de texto
-        fileIn.close();
-    }
-    
-    /**
-     * leeBuenos
-     * 
-     * Método que lee la información del archivo de texto de Buenos y los crea
-     * y ajusta sus posiciones en X y Y
-     * @throws IOException 
-     */
-    public void leeBuenos() throws IOException {
-        // Para acceder a la información de Buenos
-        sNombreArchivo = "Buenos.txt";
-        BufferedReader fileIn;
-        // Intenta acceder el archivo de texto, si no existe, lo crea
-        try {
-            fileIn = new BufferedReader(new FileReader(sNombreArchivo));
-        } catch (FileNotFoundException e){
-            fileIn = new BufferedReader(new FileReader(sNombreArchivo));
-        }
-        
-        // Creo la variable String para lectura de datos y la variable temporal
-        // entera para pasar las posiciones
-        String sDato;
-        int iPos;
-        
-        // Leo la cantidad de Buenos y la paso a una variable entera
-        sDato = fileIn.readLine();
-        int iBuenos = (Integer.parseInt(sDato));
-        
-        // Defino la Imagen de Bueno
-	URL urlImagenBueno = this.getClass().getResource("coin.gif");
-        imaImagenBueno = Toolkit.getDefaultToolkit().getImage(urlImagenBueno);
-        
-        // Creo la lista de Buenos
-        lklBuenos = new LinkedList<Base>();
-        
-        // Creo a los Buenos
-        for(int iI = 0; iI < iBuenos; iI++){
-            // Creo a un Bueno           
-            Base basBueno = new Base(0, 0,
-                Toolkit.getDefaultToolkit().getImage(urlImagenBueno));
-            
-            // Añado a Malo a la Lista
-            lklBuenos.add(basBueno);
-        } 
-        
-        // Leo el siguiente dato del archivo
-        sDato = fileIn.readLine();
-        // Mientras no se llegue al final del archivo
-        while(sDato != null) {  
-            // Para cada Bueno, leo sus posiciones en X y Y
-            for(int i = 0; i < iBuenos; i++) {
-                iPos = (Integer.parseInt(sDato));
-                lklBuenos.get(i).setX(iPos);
-                sDato = fileIn.readLine();
-                iPos = (Integer.parseInt(sDato));
-                lklBuenos.get(i).setY(iPos);
                 sDato = fileIn.readLine();
             }
         }
@@ -787,8 +722,10 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         
         // Mientras Principal tenga vidas
         while (iVidas > 0) {
-            actualiza();
-            checaColision();
+            if(!bPause) {
+                actualiza();
+                checaColision();
+            }
             repaint();
             try	{
                 // El hilo del juego se duerme.
@@ -799,6 +736,16 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
                         iexError.toString());
             }     
         }
+        bGameOver = true;
+        // Si se presiona X en la pantalla de Game Over, se reinicia el Juego
+        while(bGameOver) {
+            if(cTecla == 'X') {
+                init();
+                bGameOver = false;
+                run();
+            }
+        }
+        
     }
     
     /**
@@ -845,7 +792,7 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
     public void paint1(Graphics graDibujo) {
         // Si la imágenes ya se cargaron
         if (basPrincipal != null && imaImagenFondo != null 
-                & lklMalos != null && lklBuenos != null) {
+                & lklMalos != null) {
             
             // Mientras Principal tenga vidas
             if(iVidas > 0) {
@@ -855,16 +802,16 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
 
                 // Dibuja a Principal
                 basPrincipal.paint(graDibujo, this);
-
+                
+                // Dibujo los Disparos
+                for(Base basDisparo : lklDisparo){
+                    basDisparo.paint(graDibujo, this);
+                }    
+                
                 // Dibujo a los Malos
                 for(Base basMalo : lklMalos){
                     basMalo.paint(graDibujo, this);
-                }        
-
-                // Dibujo a los Buenos
-                for(Base basBueno : lklBuenos){
-                    basBueno.paint(graDibujo, this);
-                }          
+                }              
 
                 graDibujo.setColor(colRojo);
                 // Reviso si a Principal aún le quedan Vidas
@@ -913,31 +860,48 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
     // Revisa la tecla presionada y le asigna a la variable cTecla
     @Override
     public void keyPressed(KeyEvent keyEvent) {
-        // Si se presiona Q, se mueve hacia la esquina superior izquierda
-        if(keyEvent.getKeyCode() == keyEvent.VK_Q) {
-            cTecla = 'Q';
+        // Si se presiona la tecla izquierda, se mueve a la izquierda
+        if(keyEvent.getKeyCode() == keyEvent.VK_LEFT) {
+            cTeclaMov = '3';
         }
-        // Si se presiona p, se mueve hacia la esquina superior izquierda
-        if(keyEvent.getKeyCode() == keyEvent.VK_P) {
-            cTecla = 'P';
+        // Si se presiona la tecla derecha, se mueve a la derecha
+        if(keyEvent.getKeyCode() == keyEvent.VK_RIGHT) {
+            cTeclaMov = '4';
         }
-        // Si se presiona Q, se mueve hacia la esquina inferior izquierda
-        if(keyEvent.getKeyCode() == keyEvent.VK_A) {
+        
+        // Si se preciona espacio y se puede disparar, se crea un disparo normal
+        if(keyEvent.getKeyCode() == keyEvent.VK_SPACE && bDisparo)
+        {
+            cTecla = 'K';
+        }
+        
+        // Si se preciona A, se crea un disparo direccionado a la izquierda
+        if(keyEvent.getKeyCode() == keyEvent.VK_A && bDisparo)
+        {
             cTecla = 'A';
         }
-        // Si se presiona Q, se mueve hacia la esquina inferior derecha
-        if(keyEvent.getKeyCode() == keyEvent.VK_L) {
-            cTecla = 'L';
+        
+        // Si se preciona S, se crea un disparo direccionado a la derecha
+        if(keyEvent.getKeyCode() == keyEvent.VK_S && bDisparo)
+        {
+            cTecla = 'S';
         } 
         
-        // Si se presiona G, se guarda el archivo
-        if(keyEvent.getKeyCode() == keyEvent.VK_G) {
-            cTecla = 'G';
-        } 
+        // Si se presiona X en la pantalla de Game Over, se reinicia el Juego
+        if(keyEvent.getKeyCode() == keyEvent.VK_X)
+        {
+            cTecla = 'X';
+        }
         
-        // Si se presiona C, se carga el archivo
-        if(keyEvent.getKeyCode() == keyEvent.VK_C) {
-            cTecla = 'C';
+        // Si se presiona P, se pausa el juego
+        if(keyEvent.getKeyCode() == keyEvent.VK_P)
+        {
+            if(!bPause) {
+                bPause = true;
+            }
+            else if(bPause) {
+                bPause = false;
+            }
         } 
     }
 
@@ -945,6 +909,11 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
     public void keyReleased(KeyEvent keyEvent) {
         // Si se suelta la tecla, se le asigna un espacio en blanco
         cTecla = ' ';
+        cTeclaMov = ' ';
+            
+        // Cuando se suelte la tecla, se puede volver a disparar
+        bDisparo = true;
+     
     }
   
     /**
