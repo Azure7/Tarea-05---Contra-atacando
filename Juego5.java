@@ -81,7 +81,7 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
     private String sNombreArchivo;
     
     /*Posicion de las imagenes de Vida */
-    private int iPosX = 50;
+    private int iPosX = 0;
     private int iPosY = 100;
     
     /* Dimensiones del JFrame */
@@ -368,8 +368,8 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         }
         
         // Para cada Malo
-        for(Base basDisparo : lklDisparo) {
-            for(Base basMalo : lklMalos) {
+        for(Base basMalo : lklMalos) {
+            for(Base basDisparo : lklDisparo) {
                 // Revisa si colisiona con un Disparo
                 if(basDisparo.colisiona(basMalo)) {
                     // Si colisiona, reposiciona a Malo, elimina el Disparo
@@ -377,6 +377,7 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
                     lklDisparo.remove(basDisparo);
                     reposicionaMalo(basMalo);
                     iScore += 10;
+                    break;
                 }
             }
         }
