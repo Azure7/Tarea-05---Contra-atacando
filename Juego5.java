@@ -1,4 +1,3 @@
-
 import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -45,12 +44,15 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
     private Base     basDisparo;        // Objeto Disparo
     private LinkedList<Base> lklDisparo;// Lista de objeto de Disparo
     private LinkedList<Base> lklMalos;  // Lista de objetos de Malos
+    private LinkedList<Image> lklVidas; // Lista de imagenes de Vida
     
     /* Objetos gráficos */
     private Graphics graGraficaApplet;  // Objeto gráfico de la Imagen
     private Image    imaImagenApplet;   // Imagen a proyectar en Applet
     private Image    imaImagenFondo;    // Para dibujar la imagen de Fondo
     private Image    imaImagenGameOver; // Para dibujar la imagen de Game Over
+    private Image    imaImagenPaused;   // Para dibujar la imagen de Pausa
+    private Image    imaImagenVida;     // Para dibujar la imagen de Vida
     private Image    imaImagenPrincipal;// Imagen Principal
     private Image    imaImagenDisparo;  // Imagen Disparo
     private Image    imaImagenMalo;     // Imagen Malo
@@ -77,6 +79,10 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
     
     /* Variables string para guardar archivos */
     private String sNombreArchivo;
+    
+    /*Posicion de las imagenes de Vida */
+    private int iPosX = 50;
+    private int iPosY = 100;
     
     /* Dimensiones del JFrame */
     private static final int iWIDTH = 800;    // Ancho del JFrame
@@ -115,8 +121,8 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         // Declaro el color de la fuente de color rojo
         colRojo = new Color (200, 0, 30);
         
-        // Inicializo las vidas de Principal al azar entre 3 y 5
-        iVidas = ((int) (Math.random() * 3 + 3));
+        // Inicializo las vidas de Principal al en 5
+        iVidas = 5;
         
         // Inicializo el contador de Malos que han colisionado con Principal
         iContMalos = 0;
@@ -151,6 +157,11 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         URL urlImagenGameOver = this.getClass().getResource("gameover.jpg");
         imaImagenGameOver = Toolkit.getDefaultToolkit()
                 .getImage(urlImagenGameOver);
+        
+        //Creo la Imagen de Pausa
+        URL urlImagenPaused = this.getClass().getResource("ps.png");
+        imaImagenPaused = Toolkit.getDefaultToolkit()
+                .getImage(urlImagenPaused);
         
         // Inicializo el nombre del archivo para guardar los datos
         sNombreArchivo = " ";
@@ -246,6 +257,20 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         }
     }
     
+    public void creaVidas() {
+        // Defino la Imagen de Vidas
+	URL urlImagenVida = this.getClass().getResource("Vida.png");
+        imaImagenVida = Toolkit.getDefaultToolkit().getImage(urlImagenVida);
+        
+        //Creo la lista de Vidas
+        lklVidas = new LinkedList<Image>();
+        
+        //Creo las imagenes
+        for(int iI = 0; iI < iVidas; iI++){
+            lklVidas.add(imaImagenVida);
+        }
+    }
+    
     /** 
      * reposicionaMalo
      * Reposiciona a Malo de manera random en la parte derecha de la Pantalla
@@ -331,7 +356,7 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
                 iContMalos++;
                 reposicionaMalo(basMalo);
                 // El puntaje sólo puede disminuir si es mayor a 0
-                if(iScore >= 0) {
+                if(iScore > 0) {
                     iScore--;
                 }
             }    
@@ -812,12 +837,24 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
                 for(Base basMalo : lklMalos){
                     basMalo.paint(graDibujo, this);
                 }              
-
+                
+                //Dibujo las vidas
+                for(int iI = 0; iI < iVidas; iI++) {
+                   graDibujo.drawImage(imaImagenVida, iPosX, iPosY, this);
+                   iPosX = iPosX + 25;
+                }
+                
                 graDibujo.setColor(colRojo);
                 // Reviso si a Principal aún le quedan Vidas
                 if(iVidas > 0){
                     graDibujo.drawString("Vidas: " + iVidas, 50, 50);
                     graDibujo.drawString("Score: " + iScore, 100, 50);
+                }
+                
+                if(bPause) {
+                   //Cuando el juego está pausado se cambia la imagen de fondo
+                    graDibujo.drawImage(imaImagenPaused, 0, 0, getWidth(), 
+                    getHeight(), this);
                 }
             }
             else {
