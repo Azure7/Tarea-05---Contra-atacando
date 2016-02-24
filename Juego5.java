@@ -43,8 +43,8 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
      
     /* Objetos Base */
     private Base     basPrincipal;      // Objeto Principal
-    private Base     basDisparo;        // Objeto Disparo
-    private LinkedList<Base> lklDisparo;// Lista de objeto de Disparo
+    private Bala     balDisparo;        // Objeto Disparo
+    private LinkedList<Bala> lklDisparo;// Lista de objeto de Disparo
     private LinkedList<Base> lklMalos;  // Lista de objetos de Malos
     private LinkedList<Image> lklVidas; // Lista de imagenes de Vida
     
@@ -103,7 +103,7 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         creaMalos();
         
         // Creo la lista de los Disparos
-        lklDisparo = new LinkedList<Base>();
+        lklDisparo = new LinkedList<Bala>();
     }
     
     /**
@@ -200,24 +200,24 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
                 (urlImagenDisparo);
         
         // Creo el objeto para Disparo
-	basDisparo = new Base(0, 0, 
+	balDisparo = new Bala(0, 0, 0, 
                 Toolkit.getDefaultToolkit().getImage(urlImagenDisparo));
         
         // Posiciono a Disparo justo encima de Principal
-        basDisparo.setX(basPrincipal.getX() + basPrincipal.getAncho() / 4);
-        basDisparo.setY(basPrincipal.getY());
+        balDisparo.setX(basPrincipal.getX() + basPrincipal.getAncho() / 4);
+        balDisparo.setY(basPrincipal.getY());
         
         // Le asigno su trayectoria
         if(cTecla == 'A') {
-            basDisparo.setTrayectoria(1);
+            balDisparo.setTrayectoria(1);
         }
         
         if(cTecla == 'S') {
-            basDisparo.setTrayectoria(2);
+            balDisparo.setTrayectoria(2);
         }
         
         // Añado el disparo a la lista
-        lklDisparo.add(basDisparo);
+        lklDisparo.add(balDisparo);
     }
     
     /** creaMalos()
@@ -455,16 +455,8 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
      * Método que actualiza la posición del Disparo
      */
     public void actualizaDisparo() {
-        for(Base basDisparo : lklDisparo) { 
-            basDisparo.setY(basDisparo.getY() - 2);
-            
-            if(basDisparo.getTrayectoria() == 1) {
-                basDisparo.setX(basDisparo.getX() - 2);
-            }
-            
-            if(basDisparo.getTrayectoria() == 2) {
-                basDisparo.setX(basDisparo.getX() + 2);
-            }
+        for(Bala balDisparo : lklDisparo) { 
+            balDisparo.avanza(balDisparo.getTrayectoria());
         }
     }
     
