@@ -35,6 +35,8 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         init();
         start();
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        // Añado los escuchadores
+        addKeyListener(this);
     }
 
     /* Objetos para manejar el buffer del Applet y la Imagen no parpadee */
@@ -111,9 +113,6 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
      * a mostrar en pantalla
      */
     public void incializaEscenario() {
-        // Añado los escuchadores
-        addKeyListener(this);
-        
         // Declaro el color de la fuente de color rojo
         colRojo = new Color (200, 0, 30);
         
@@ -235,8 +234,8 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         // Creo la lista de los Malos
         lklMalos = new LinkedList<Base>();
         
-        // Declaro el número al azar entre 8 y 10 para crear a los Malos
-        int iRanMalos = ((int) (Math.random() * 3 + 8));
+        // Declaro el número al azar entre 10 y 15 para crear a los Malos
+        int iRanMalos = ((int) (Math.random() * 6 + 10));
         
         // Creo a los Malos
         for(int iI = 0; iI < iRanMalos; iI++){
@@ -386,7 +385,7 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         // que se vuelva disparar hasta que no se suelte la tecla
         // Sólo puede un máximo de 5 balas en pantalla
         if(cTecla == 'K' || cTecla == 'A' || cTecla == 'S') {
-            if(bDisparo && lklDisparo.size() <= 5) {
+            if(bDisparo && lklDisparo.size() < 20) {
                creaDisparo(cTecla);
                bDisparo = false; 
             }
@@ -430,12 +429,12 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         switch(cChar){
             // Si se presiona la tecla izquierda, se mueve a la izquierda
             case '3':
-                basPrincipal.setX(basPrincipal.getX() - 2);
+                basPrincipal.setX(basPrincipal.getX() - 3);
                 break;
             
             // Si se presiona la tecla derecha, se mueve a la derecha
             case '4':
-                basPrincipal.setX(basPrincipal.getX() + 2);
+                basPrincipal.setX(basPrincipal.getX() + 3);
                 break;
         }
         
@@ -918,12 +917,7 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         // Si se presiona P, se pausa el juego
         if(keyEvent.getKeyCode() == keyEvent.VK_P)
         {
-            if(!bPause) {
-                bPause = true;
-            }
-            else if(bPause) {
-                bPause = false;
-            }
+            bPause = !bPause;
         } 
     }
 
