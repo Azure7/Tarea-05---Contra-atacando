@@ -45,7 +45,7 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
     private Base     basPrincipal;      // Objeto Principal
     private Bala     balDisparo;        // Objeto Disparo
     private LinkedList<Bala> lklDisparo;// Lista de objeto de Disparo
-    private LinkedList<Base> lklMalos;  // Lista de objetos de Malos
+    private LinkedList<Malo> lklMalos;  // Lista de objetos de Malos
     private LinkedList<Image> lklVidas; // Lista de imagenes de Vida
     
     /* Objetos gráficos */
@@ -201,7 +201,7 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         
         // Creo el objeto para Disparo
 	balDisparo = new Bala(0, 0, 0, 
-                Toolkit.getDefaultToolkit().getImage(urlImagenDisparo));
+                 Toolkit.getDefaultToolkit().getImage(urlImagenDisparo));
         
         // Posiciono a Disparo justo encima de Principal
         balDisparo.setX(basPrincipal.getX() + basPrincipal.getAncho() / 4);
@@ -232,7 +232,7 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         imaImagenMalo = Toolkit.getDefaultToolkit().getImage(urlImagenMalo);
         
         // Creo la lista de los Malos
-        lklMalos = new LinkedList<Base>();
+        lklMalos = new LinkedList<Malo>();
         
         // Declaro el número al azar entre 10 y 15 para crear a los Malos
         int iRanMalos = ((int) (Math.random() * 6 + 10));
@@ -240,35 +240,35 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         // Creo a los Malos
         for(int iI = 0; iI < iRanMalos; iI++){
             // Creo a un Malo            
-            Base basMalo = new Base(0, 0,
+            Malo malMalo = new Malo(0, 0,
                 Toolkit.getDefaultToolkit().getImage(urlImagenMalo));
             
             // Añado a Malo a la Lista
-            lklMalos.add(basMalo);
+            lklMalos.add(malMalo);
         } 
         
         // Inicializo la velocidad de los Malos
         iVelMal = 2;
         
         // Reposiciono a todos los Malos en la parte derecha del Applet
-        for(Base basMalo : lklMalos) {           
-            reposicionaMalo(basMalo); 
+        for(Malo malMalo : lklMalos) {           
+            reposicionaMalo(malMalo); 
         }
     }
     
     /** 
      * reposicionaMalo
      * Reposiciona a Malo de manera random en la parte derecha de la Pantalla
-     * @param basMalo
+     * @param malMalo
      * 
      */    
-    public void reposicionaMalo(Base basMalo){
+    public void reposicionaMalo(Malo malMalo){
         // Reposiciono a cada Moneda de la Lista de manera random encima del 
             // marco para que caigan a diferente momento
-        basMalo.setX((int) (Math.random() 
-            * (getWidth() - basMalo.getAncho())));
-        basMalo.setY(0 - (int) (Math.random() 
-            * (getHeight() - basMalo.getAlto())));       
+        malMalo.setX((int) (Math.random() 
+            * (getWidth() - malMalo.getAncho())));
+        malMalo.setY(0 - (int) (Math.random() 
+            * (getHeight() - malMalo.getAlto())));       
     }
     
     /**
@@ -336,10 +336,10 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
     public void checaColisionMalos() {
         // Si un Malo colisiona con Principal, aumenta el contador de colisiones
         // y reposiciono a Malo para que vuelve entrar por la derecha del Applet
-        for(Base basMalo : lklMalos){
-            if(basMalo.colisiona(basPrincipal)) {
+        for(Malo malMalo : lklMalos){
+            if(malMalo.colisiona(basPrincipal)) {
                 iContMalos++;
-                reposicionaMalo(basMalo);
+                reposicionaMalo(malMalo);
                 // El puntaje sólo puede disminuir si es mayor a 0
                 if(iScore > 0) {
                     iScore--;
@@ -347,20 +347,20 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
             }    
             
             // Si Malo toca la parte inferior de la pantalla, lo reposiciona
-            if(basMalo.getY() >= getHeight() - basMalo.getAlto()) {
-                reposicionaMalo(basMalo);
+            if(malMalo.getY() >= getHeight() - malMalo.getAlto()) {
+                reposicionaMalo(malMalo);
             }
         }
         
         // Para cada Malo
-        for(Base basMalo : lklMalos) {
+        for(Malo malMalo : lklMalos) {
             for(Base basDisparo : lklDisparo) {
                 // Revisa si colisiona con un Disparo
-                if(basDisparo.colisiona(basMalo)) {
+                if(basDisparo.colisiona(malMalo)) {
                     // Si colisiona, reposiciona a Malo, elimina el Disparo
                     // y suma 10 puntos
                     lklDisparo.remove(basDisparo);
-                    reposicionaMalo(basMalo);
+                    reposicionaMalo(malMalo);
                     iScore += 10;
                     break;
                 }
@@ -466,10 +466,14 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
      * Método que actualiza la posición de los Malos
      */
     public void actualizaMalos() {
-        // Actualizo la posición de cada Malo en Y para que avance 2 pixeles
-        // hacia la parte inferior de la pantalla
-        for(Base basMalo : lklMalos){
-            basMalo.setY(basMalo.getY() + iVelMal);
+        // Actualizo al 10% de los Malos para que sigan a Principal
+        for(int iA = 0; iA < (lklMalos.size() / 10) + 1; iA++) {
+            lklMalos.get(iA).avanza(basPrincipal.getX());
+        }
+        
+        // Actualizo al resto de los Malos para que caigan normalmente
+        for(int iA = lklMalos.size() / 10; iA < lklMalos.size(); iA++) {
+            lklMalos.get(iA).avanza();
         }
     }
     
@@ -662,16 +666,16 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         imaImagenMalo = Toolkit.getDefaultToolkit().getImage(urlImagenMalo);
         
         // Creo la lista de Malos
-        lklMalos = new LinkedList<Base>();
+        lklMalos = new LinkedList<Malo>();
         
         // Creo a los Malos
         for(int iI = 0; iI < iMalos; iI++){
             // Creo a un Malo            
-            Base basMalo = new Base(0, 0,
+            Malo malMalo = new Malo(0, 0,
                 Toolkit.getDefaultToolkit().getImage(urlImagenMalo));
             
             // Añado a Malo a la Lista
-            lklMalos.add(basMalo);
+            lklMalos.add(malMalo);
         } 
         
         // Leo el siguiente dato del archivo
@@ -812,8 +816,8 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
                 }    
                 
                 // Dibujo a los Malos
-                for(Base basMalo : lklMalos){
-                    basMalo.paint(graDibujo, this);
+                for(Malo malMalo : lklMalos){
+                    malMalo.paint(graDibujo, this);
                 }              
                 
                 //Dibujo las vidas
