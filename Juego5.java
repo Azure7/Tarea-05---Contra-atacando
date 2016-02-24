@@ -80,10 +80,6 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
     /* Variables string para guardar archivos */
     private String sNombreArchivo;
     
-    /*Posicion de las imagenes de Vida */
-    private int iPosX = 0;
-    private int iPosY = 100;
-    
     /* Dimensiones del JFrame */
     private static final int iWIDTH = 800;    // Ancho del JFrame
     private static final int iHEIGHT = 500;   // Altura del JFrame
@@ -831,15 +827,13 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
                 
                 //Dibujo las vidas
                 for(int iI = 0; iI < iVidas; iI++) {
-                   graDibujo.drawImage(imaImagenVida, iPosX, iPosY, this);
-                   iPosX = iPosX + 50;
+                   graDibujo.drawImage(imaImagenVida, 20 + (iI * 30), 30 , this);
                 }
                 
                 graDibujo.setColor(colRojo);
                 // Reviso si a Principal aún le quedan Vidas
                 if(iVidas > 0){
-                    graDibujo.drawString("Vidas: " + iVidas, 50, 50);
-                    graDibujo.drawString("Score: " + iScore, 100, 50);
+                    graDibujo.drawString("Score: " + iScore, 40, 90);
                 }
                 
                 if(bPause) {
