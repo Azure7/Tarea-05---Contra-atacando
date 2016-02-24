@@ -163,6 +163,10 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         imaImagenPaused = Toolkit.getDefaultToolkit()
                 .getImage(urlImagenPaused);
         
+        // Defino la Imagen de Vidas
+	URL urlImagenVida = this.getClass().getResource("Vida.png");
+        imaImagenVida = Toolkit.getDefaultToolkit().getImage(urlImagenVida);
+        
         // Inicializo el nombre del archivo para guardar los datos
         sNombreArchivo = " ";
     }
@@ -254,20 +258,6 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         // Reposiciono a todos los Malos en la parte derecha del Applet
         for(Base basMalo : lklMalos) {           
             reposicionaMalo(basMalo); 
-        }
-    }
-    
-    public void creaVidas() {
-        // Defino la Imagen de Vidas
-	URL urlImagenVida = this.getClass().getResource("Vida.png");
-        imaImagenVida = Toolkit.getDefaultToolkit().getImage(urlImagenVida);
-        
-        //Creo la lista de Vidas
-        lklVidas = new LinkedList<Image>();
-        
-        //Creo las imagenes
-        for(int iI = 0; iI < iVidas; iI++){
-            lklVidas.add(imaImagenVida);
         }
     }
     
@@ -842,7 +832,7 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
                 //Dibujo las vidas
                 for(int iI = 0; iI < iVidas; iI++) {
                    graDibujo.drawImage(imaImagenVida, iPosX, iPosY, this);
-                   iPosX = iPosX + 25;
+                   iPosX = iPosX + 50;
                 }
                 
                 graDibujo.setColor(colRojo);
