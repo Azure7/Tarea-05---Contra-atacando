@@ -25,8 +25,8 @@ public class Malo extends Base {
     * Método que hace que Malo avance
     * 
     **/
-    public void avanza() {
-        setY(getY() + 1);
+    public void avanza(int iVelocidad) {
+        setY(getY() + iVelocidad);
     }
 
     /**
@@ -35,14 +35,14 @@ public class Malo extends Base {
     * @param int coordenadas en X del objeto Base que se perseguirá
     * 
     **/
-    public void avanza(int iX) {
-        setY(getY() + 1);
+    public void avanza(int iX, int iVelocidad) {
+        setY(getY() + iVelocidad);
                 
         // Si Principal está a la izquierda, se mueve a la izquierda
         if(iX < getX()) {
             setX(getX() - 1);
         }
-                
+              
         // Si Princopal está a la derecha, se mueve a la derecha
         if(iX > getX()) {
             setX(getX() + 1);

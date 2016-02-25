@@ -7,12 +7,6 @@ import java.awt.Image;
 import java.awt.Color;
 import java.awt.Toolkit;
 import javax.swing.JFrame;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 
 /**
  * Juego5
@@ -78,10 +72,7 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
     /* Variables de movimiento de Principal */
     private char     cTeclaMov;         // Dirección de movimiento de Principal
     private char     cTecla;            // Dirección de movimiento de Disparo
-    
-    /* Variables string para guardar archivos */
-    private String sNombreArchivo;
-    
+   
     /* Dimensiones del JFrame */
     private static final int iWIDTH = 800;    // Ancho del JFrame
     private static final int iHEIGHT = 500;   // Altura del JFrame
@@ -139,10 +130,10 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         bGameOver = false;
                            
         // Defino el Sonido para cuando se pierde una vida
-        audPierdeVida = new SoundClip ("Explosion.wav"); 
+        audPierdeVida = new SoundClip("Explosion.wav"); 
         
         // Defino el Sonido para cuando se ganan puntos
-        audPuntos = new SoundClip ("mice.wav"); 
+        audPuntos = new SoundClip("mice.wav"); 
 		
         // Creo la Imagen de Fondo
         URL urlImagenFondo = this.getClass().getResource("ciudad.png");
@@ -161,9 +152,6 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         // Defino la Imagen de Vidas
 	URL urlImagenVida = this.getClass().getResource("Vida.png");
         imaImagenVida = Toolkit.getDefaultToolkit().getImage(urlImagenVida);
-        
-        // Inicializo el nombre del archivo para guardar los datos
-        sNombreArchivo = " ";
     }
     
     /** creaPrincipal()
@@ -248,7 +236,7 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
         } 
         
         // Inicializo la velocidad de los Malos
-        iVelMal = 2;
+        iVelMal = 1;
         
         // Reposiciono a todos los Malos en la parte derecha del Applet
         for(Malo malMalo : lklMalos) {           
@@ -359,6 +347,7 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
                 if(basDisparo.colisiona(malMalo)) {
                     // Si colisiona, reposiciona a Malo, elimina el Disparo
                     // y suma 10 puntos
+                    audPuntos.play();
                     lklDisparo.remove(basDisparo);
                     reposicionaMalo(malMalo);
                     iScore += 10;
@@ -376,7 +365,6 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
      * 
      */
     public void actualiza(){ 
-        actualizaArchivo();
         // Actualizo la posición de Principal según la tecla presionada
         actualizaPrincipal(cTeclaMov);
         actualizaMalos();
@@ -391,31 +379,6 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
             }
         }
         actualizaDisparo();
-    }
-    
-    /**
-     * actualizaArchivo
-     * 
-     * Método que revisa si se ha guardado o cargado un archivo
-     */
-    public void actualizaArchivo() {
-        // Si se presiona G, se guarda el archivo
-        if(cTecla == 'G') {
-                try {
-                    grabaArchivo();
-                }   catch(IOException e) {
-                System.out.println("Error en " + e.toString());
-                }
-            }
-        
-        // Si se presiona C, se carga el archivo
-        if(cTecla == 'C') {
-        try {
-            leeArchivo();
-        }   catch(IOException e) {
-            System.out.println("Error en " + e.toString());
-            }
-        }
     }
     
     /** 
@@ -468,232 +431,13 @@ public class Juego5 extends JFrame implements Runnable, KeyListener {
     public void actualizaMalos() {
         // Actualizo al 10% de los Malos para que sigan a Principal
         for(int iA = 0; iA < (lklMalos.size() / 10) + 1; iA++) {
-            lklMalos.get(iA).avanza(basPrincipal.getX());
+            lklMalos.get(iA).avanza(basPrincipal.getX(), iVelMal);
         }
         
         // Actualizo al resto de los Malos para que caigan normalmente
         for(int iA = lklMalos.size() / 10; iA < lklMalos.size(); iA++) {
-            lklMalos.get(iA).avanza();
+            lklMalos.get(iA).avanza(iVelMal);
         }
-    }
-    
-    /** grabaArchivo
-     * 
-     * Método que mandar a llamar a los métodos para grabar la información
-     * del juego, Principal y Malos
-     * 
-     * @throws IOException 
-     */
-    public void grabaArchivo() throws IOException {
-        grabaVidasScore();
-        grabaPrincipal();
-        grabaMalos();      
-    }
-    
-    /**
-     * leeArchivo
-     * 
-     * Método que mandar a llamar a los métodos para leer la información
-     * del juego, a Principal y los Malos
-     * @throws IOException 
-     */
-    public void leeArchivo() throws IOException {
-        leeVidasScore();
-        leePrincipal();
-        leeMalos();
-    }
-    
-    /**
-     * grabaVidasScore
-     * 
-     * Método que guarda en un archivo de texto la información del Juego 
-     * como vidas y puntaje
-     * @throws IOException 
-     */
-    public void grabaVidasScore() throws IOException {
-        // Creo el archivo de texto para guardar la información
-        sNombreArchivo = "VidasScore.txt";
-        PrintWriter fileOut = new PrintWriter(new FileWriter(sNombreArchivo));
-        // Guardo las Vidas y el Puntaje
-        fileOut.println(iVidas);
-        fileOut.println(iScore);
-        // Cierro el archivo de texto
-        fileOut.close();
-    }
-    
-    /**
-     * grabaPrincipal
-     * 
-     * Método que graba en un archivo de texto la posición de Principal
-     * @throws IOException 
-     */
-    public void grabaPrincipal() throws IOException {
-        // Creo el archivo de texto para guardar la información de Principal
-        sNombreArchivo = "Principal.txt";
-        PrintWriter fileOut = new PrintWriter(new FileWriter(sNombreArchivo));
-        // Grabo la X y Y de Principal en un archivo de texto
-        fileOut.println(basPrincipal.getX());
-        fileOut.println(basPrincipal.getY());
-        // Cierro el archivo de texto
-        fileOut.close();
-    }
-    
-    /**
-     * grabaMalos
-     * 
-     * Método que graba en un archivo de texto la cantidad de Malos y sus 
-     * posiciones dentro del JFrame
-     * @throws IOException 
-     */
-    public void grabaMalos() throws IOException {   
-        // Creo el archivo de texto para guardar la información de los Malos
-        sNombreArchivo = "Malos.txt";
-        PrintWriter fileOut = new PrintWriter(new FileWriter(sNombreArchivo));
-        
-        // Guardo la cantidad de Malos
-        fileOut.println(lklMalos.size());
-        
-        // Para cada Malo, guardo su X y su Y
-        for(int i = 0; i < lklMalos.size(); i++) {
-            fileOut.println(lklMalos.get(i).getX());
-            fileOut.println(lklMalos.get(i).getY());
-        }
-        // Cierro el archivo de texto
-        fileOut.close();
-    }
-    
-    /** leeVidasScore
-    *
-    * Método que lee las Vidas y Score de un archivo de texto
-    * 
-    **/
-    public void leeVidasScore() throws IOException {
-        // Para acceder a la información de Vidas y Score
-        sNombreArchivo = "VidasScore.txt";
-        BufferedReader fileIn;
-        
-        // Intenta acceder el archivo de texto, si no existe, lo crea
-        try {
-            fileIn = new BufferedReader(new FileReader(sNombreArchivo));
-        } catch (FileNotFoundException e){
-            fileIn = new BufferedReader(new FileReader(sNombreArchivo));
-        }
-        
-        // Creo la variable String para lectura de datos y la variable
-        // temporal para lectura de Vidas y Score
-        String sDato;
-        int iTemp;
-        
-        // Leo la primera línea del archivo de texto y paso las Vidas
-        sDato = fileIn.readLine();
-        iTemp = (Integer.parseInt(sDato));
-        iVidas = iTemp;
-        
-        // Leo la primera línea del archivo de texto y paso el Score
-        sDato = fileIn.readLine();
-        iTemp = (Integer.parseInt(sDato));
-        iScore = iTemp;
-        
-        // Cierro el arcvhivo de texto
-        fileIn.close();
-    }
-    
-    /** leePrincipal
-    *
-    * Método que lee las posiciones en X y Y del Principal
-    * 
-    **/
-    public void leePrincipal() throws IOException {
-        // Para acceder a la información de Principal
-        sNombreArchivo = "Principal.txt";
-        BufferedReader fileIn;
-        
-        // Intenta acceder el archivo de texto, si no existe, lo crea
-        try {
-            fileIn = new BufferedReader(new FileReader(sNombreArchivo));
-        } catch (FileNotFoundException e){
-            fileIn = new BufferedReader(new FileReader(sNombreArchivo));
-        }
-        
-        // Creo la variable String para lectura de datos y la variable temporal
-        // entera para pasar las posiciones
-        String sDato;
-        int iPos;
-        
-        // Leo la primera línea del archivo de texto y paso la posición en X
-        sDato = fileIn.readLine();
-        iPos = (Integer.parseInt(sDato));
-        basPrincipal.setX(iPos);
-        
-        // Leo la siguiente línea del archivo de texto y paso la posición en Y
-        sDato = fileIn.readLine();
-        iPos = (Integer.parseInt(sDato));
-        basPrincipal.setY(iPos);
-        
-        // Cierro el archivo de texto
-        fileIn.close();
-    }
-    
-    /**
-     * leeMalos
-     * 
-     * Método que lee la información del archivo de texto de Malos y los crea
-     * y ajusta sus posiciones en X y Y
-     * @throws IOException 
-     */
-    public void leeMalos() throws IOException {
-        // Para acceder a la información de Malos
-        sNombreArchivo = "Malos.txt";
-        BufferedReader fileIn;
-        // Intenta acceder el archivo de texto, si no existe, lo crea
-        try {
-            fileIn = new BufferedReader(new FileReader(sNombreArchivo));
-        } catch (FileNotFoundException e){
-            fileIn = new BufferedReader(new FileReader(sNombreArchivo));
-        }
-        
-        // Creo la variable String para lectura de datos y la variable temporal
-        // entera para pasar las posiciones
-        String sDato;
-        int iPos;
-        
-        // Leo la cantidad de Maloss y la paso a una variable entera
-        sDato = fileIn.readLine();
-        int iMalos = (Integer.parseInt(sDato));
-        
-        // Defino la Imagen de Malos
-	URL urlImagenMalo = this.getClass().getResource("goomba.gif");
-        imaImagenMalo = Toolkit.getDefaultToolkit().getImage(urlImagenMalo);
-        
-        // Creo la lista de Malos
-        lklMalos = new LinkedList<Malo>();
-        
-        // Creo a los Malos
-        for(int iI = 0; iI < iMalos; iI++){
-            // Creo a un Malo            
-            Malo malMalo = new Malo(0, 0,
-                Toolkit.getDefaultToolkit().getImage(urlImagenMalo));
-            
-            // Añado a Malo a la Lista
-            lklMalos.add(malMalo);
-        } 
-        
-        // Leo el siguiente dato del archivo
-        sDato = fileIn.readLine();
-        // Mientras no se llegue al final del archivo
-        while(sDato != null) {  
-            // Para cada Malo, leo sus posiciones en X y Y
-            for(int i = 0; i < iMalos; i++) {
-                iPos = (Integer.parseInt(sDato));
-                lklMalos.get(i).setX(iPos);
-                sDato = fileIn.readLine();
-                iPos = (Integer.parseInt(sDato));
-                lklMalos.get(i).setY(iPos);
-                sDato = fileIn.readLine();
-            }
-        }
-        // Cierro el archivo de texto
-        fileIn.close();
     }
     
     /** 
